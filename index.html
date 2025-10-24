@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cURL & JSON Body Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            /* Lighter gray background */
+        }
+
+        .code-block {
+            background-color: #1E293B;
+            color: #E2E8F0;
+            padding: 1rem;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .btn {
+            @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+        }
+
+        .input-field {
+            @apply mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm;
+        }
+
+        .label-text {
+            @apply block text-sm font-medium text-gray-700;
+        }
+
+        /* Custom class for output blocks */
+        .output-card {
+            @apply border rounded-lg overflow-hidden shadow-sm bg-white;
+        }
+
+        .output-header {
+            @apply flex justify-between items-center p-3 bg-gray-50 border-b border-gray-200;
+        }
+
+        .output-title {
+            @apply text-base font-semibold text-gray-800 flex items-center gap-2;
+        }
+
+        .output-copy-btn {
+            @apply text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors;
+        }
+
+        .output-code {
+            @apply rounded-t-none;
+        }
+    </style>
+</head>
+
+<body class="bg-light text-dark">
+
+    <div class="container-fluid p-4 p-md-5">
+        <header class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-dark mb-3">API Request Builder</h1>
+            <p class="lead text-muted">เครื่องมือสร้าง JSON Body และ cURL สำหรับส่ง Order</p>
+        </header>
+
+        <main class="row g-4">
+            <!-- Section 1: Fetch Item Modifiers -->
+            <section id="section1" class="col-12 col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <h2 class="card-title h4 mb-4 border-bottom pb-3 text-primary">ส่วนที่ 1:
+                            ดึงข้อมูลไอเท็มและตัวเลือก (Modifiers)</h2>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-sm-6">
+                                <label for="menu_template_id_1" class="form-label fw-semibold">Menu Template ID</label>
+                                <input type="text" id="menu_template_id_1" class="form-control" value="40">
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label for="concept_id" class="form-label fw-semibold">Concept ID</label>
+                                <input type="text" id="concept_id" class="form-control" value="11">
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label for="item_id" class="form-label fw-semibold">Item ID</label>
+                                <input type="text" id="item_id_1" class="form-control" value="670130">
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label for="language" class="form-label fw-semibold">Language</label>
+                                <input type="text" id="language" class="form-control" value="e">
+                            </div>
+                            <div class="col-12 col-sm-4">
+                                <label for="limit_c_mod_group" class="form-label fw-semibold">Limit C Mod Group</label>
+                                <input type="number" id="limit_c_mod_group" class="form-control" value="1" min="1">
+                            </div>
+                            <div class="col-12 col-sm-4">
+                                <label for="limit_c_object" class="form-label fw-semibold">Limit C Object</label>
+                                <input type="number" id="limit_c_object" class="form-control" value="2" min="1">
+                            </div>
+                            <div class="col-12 col-sm-4">
+                                <label for="max_level" class="form-label fw-semibold">Max Level</label>
+                                <input type="number" id="max_level" class="form-control" value="4" min="1">
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <button id="fetch-button" class="btn btn-primary btn-lg">
+                                <i class="bi bi-search me-2"></i>
+                                ดึงข้อมูลไอเท็ม
+                            </button>
+                            <button id="clear-items-button" class="btn btn-outline-danger btn-lg">
+                                <i class="bi bi-trash me-2"></i>
+                                ล้างข้อมูล Items
+                            </button>
+                        </div>
+
+                        <!-- เพิ่มส่วนแสดงรายการ Items ที่เลือก -->
+                        <div id="selected-items" class="mt-4">
+                            <h4 class="h5 fw-semibold mb-3 text-dark">รายการ Items ที่เลือก:</h4>
+                            <div id="items-list" class="row g-3">
+                                <!-- Items จะถูกแสดงที่นี่ -->
+                            </div>
+                        </div>
+
+                        <div id="item-details" class="mt-4">
+                            <!-- Item details และ modifiers tree จะถูกแสดงที่นี่ -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Build Order Payload -->
+            <section id="section2" class="col-12 col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <h2 class="card-title h4 mb-4 border-bottom pb-3 text-primary">ส่วนที่ 2: สร้างและส่ง Order</h2>
+
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h3 class="card-title h6 mb-3 d-flex align-items-center">
+                                            <i class="bi bi-shield-lock me-2 text-muted"></i>
+                                            Authentication Credentials
+                                        </h3>
+                                        <div class="row g-3">
+                                            <div class="col-12 col-sm-6">
+                                                <label for="auth_username"
+                                                    class="form-label fw-semibold">Username</label>
+                                                <input type="text" id="auth_username" class="form-control"
+                                                    value="minor_uat">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label for="auth_password"
+                                                    class="form-label fw-semibold">Password</label>
+                                                <input type="password" id="auth_password" class="form-control"
+                                                    value="123456">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="auth_token" class="form-label fw-semibold">Authorization Bearer
+                                    Token</label>
+                                <div class="input-group">
+                                    <textarea id="auth_token" rows="2" class="form-control font-monospace small"
+                                        placeholder="Token จะถูกดึงอัตโนมัติเมื่อกดปุ่มด้านล่าง">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjliNzY0OTczenLWUxODktNDdlOS1hOTQzLTFkNDYzNDBjMDBiNCIsInN1YiI6Im1pbm9yX3VhdCIsImV4cCI6MTc2MTAyNTU5NCwiaWF0IjoxNzYwOTM5MTk0fQ.9_Pq3ZMtC2XbZnD69qIn5B_COTnLHo0mFeZdHFXbXJE</textarea>
+                                    <button id="get-auth-token-btn" class="btn btn-outline-primary" type="button">
+                                        <i class="bi bi-key me-1"></i>ดึง Token
+                                    </button>
+                                </div>
+                                <small class="text-muted">กดปุ่มเพื่อดึง token ใหม่จาก API</small>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="row g-3">
+                                    <div class="col-12 col-sm-6">
+                                        <label for="brand" class="form-label fw-semibold">Brand</label>
+                                        <input type="text" id="brand" class="form-control" value="the_coffee_club">
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        <label for="store_id" class="form-label fw-semibold">Store ID</label>
+                                        <input type="number" id="store_id" class="form-control" value="2312">
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        <label for="bu_code" class="form-label fw-semibold">BU Code</label>
+                                        <input type="number" id="bu_code" class="form-control" value="1245">
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        <label for="menu_template_id_2" class="form-label fw-semibold">Menu Template
+                                            ID</label>
+                                        <input type="number" id="menu_template_id_2" class="form-control" value="40">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Info Group -->
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h3 class="card-title h5 mb-3 d-flex align-items-center">
+                                            <i class="bi bi-person-circle me-2 text-muted"></i>
+                                            Contact & Customer Info
+                                        </h3>
+                                        <div class="row g-3">
+                                            <div class="col-12 col-sm-6">
+                                                <label for="customer_name" class="form-label fw-semibold">Name</label>
+                                                <input type="text" id="customer_name" class="form-control"
+                                                    value="devplus">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label for="customer_phone" class="form-label fw-semibold">Phone
+                                                    Number</label>
+                                                <input type="text" id="customer_phone" class="form-control"
+                                                    value="0610000008">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Info Group -->
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h3 class="card-title h5 mb-3 d-flex align-items-center">
+                                            <i class="bi bi-credit-card me-2 text-muted"></i>
+                                            Payment Info
+                                        </h3>
+                                        <div class="row g-3">
+                                            <div class="col-12 col-sm-4">
+                                                <label for="payment_method" class="form-label fw-semibold">Payment
+                                                    Method</label>
+                                                <input type="text" id="payment_method" class="form-control"
+                                                    value="card">
+                                            </div>
+                                            <div class="col-12 col-sm-4">
+                                                <label for="credit_card_no" class="form-label fw-semibold">Credit Card
+                                                    No (last 4)</label>
+                                                <input type="text" id="credit_card_no" class="form-control"
+                                                    value="1234">
+                                            </div>
+                                            <div class="col-12 col-sm-4">
+                                                <label for="credit_card_holder_name" class="form-label fw-semibold">Card
+                                                    Holder Name</label>
+                                                <input type="text" id="credit_card_holder_name" class="form-control"
+                                                    value="plustrap">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="d-flex flex-wrap gap-2 pt-3">
+                                    <button id="build-button" class="btn btn-primary btn-lg d-block d-sm-inline-block">
+                                        <i class="bi bi-code-square me-2"></i>
+                                        สร้าง JSON & cURL
+                                    </button>
+                                    <button id="send-request-button"
+                                        class="btn btn-success btn-lg d-block d-sm-inline-block">
+                                        <i class="bi bi-send me-2"></i>
+                                        ส่ง Request
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="loading-spinner" class="d-none d-flex align-items-center justify-content-center mt-4">
+                            <div class="spinner-border text-primary me-3" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span class="text-muted">กำลังส่ง Request...</span>
+                        </div>
+
+                        <div id="output" class="mt-4">
+                            <!-- JSON body and cURL command will be rendered here -->
+                        </div>
+                        <div id="response-output" class="mt-4">
+                            <!-- API response will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: Get Order by ID -->
+            <section id="section3" class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="card-title h4 mb-4 border-bottom pb-3 text-primary">ส่วนที่ 3: ดึงข้อมูล Order by ID
+                        </h2>
+
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <div class="row g-3">
+                                    <div class="col-12 col-sm-6">
+                                        <label for="order_id" class="form-label fw-semibold">Order ID</label>
+                                        <input type="text" id="order_id" class="form-control"
+                                            placeholder="กรอก Order ID">
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        <label for="menu_template_id_3" class="form-label fw-semibold">Menu Template
+                                            ID</label>
+                                        <input type="text" id="menu_template_id_3" class="form-control" value="40">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <button id="get-order-button" class="btn btn-info btn-lg">
+                                    <i class="bi bi-search me-2"></i>
+                                    ดึงข้อมูล Order
+                                </button>
+                            </div>
+
+                            <div id="order-loading"
+                                class="d-none d-flex align-items-center justify-content-center mt-4">
+                                <div class="spinner-border text-info me-3" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <span class="text-muted">กำลังดึงข้อมูล Order...</span>
+                            </div>
+
+                            <div id="order-details" class="mt-4">
+                                <!-- Order details จะถูกแสดงที่นี่ -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Store fetched item data globally to be accessible by section 2
+        const urlApi = 'https://api.1112dev.com/api/m3';
+        let currentItemData = null;
+        let selectedItems = []; // Array สำหรับเก็บ items ที่เลือก
+
+        const fetchButton = document.getElementById('fetch-button');
+        const clearItemsButton = document.getElementById('clear-items-button');
+        const buildButton = document.getElementById('build-button');
+        const sendButton = document.getElementById('send-request-button');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const outputContainer = document.getElementById('output');
+        const responseContainer = document.getElementById('response-output');
+        const getAuthTokenBtn = document.getElementById('get-auth-token-btn');
+        const getOrderButton = document.getElementById('get-order-button');
+        const orderLoading = document.getElementById('order-loading');
+        const orderDetails = document.getElementById('order-details');
+
+
+        // Function to show Bootstrap alerts
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alert-container') || createAlertContainer();
+            const alertId = 'alert-' + Date.now();
+            const alertHtml = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            alertContainer.insertAdjacentHTML('beforeend', alertHtml);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    const bsAlert = new bootstrap.Alert(alertElement);
+                    bsAlert.close();
+                }
+            }, 5000);
+        }
+
+        function createAlertContainer() {
+            const container = document.createElement('div');
+            container.id = 'alert-container';
+            container.className = 'position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '1050';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        function showCorsSolution() {
+            const corsModal = document.getElementById('cors-modal') || createCorsModal();
+            const modal = new bootstrap.Modal(corsModal);
+            modal.show();
+        }
+
+        function createCorsModal() {
+            const modalHtml = `
+                <div class="modal fade" id="cors-modal" tabindex="-1" aria-labelledby="corsModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="corsModalLabel">
+                                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                                    วิธีแก้ปัญหา CORS
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="bi bi-info-circle me-2"></i>สาเหตุของปัญหา CORS</h6>
+                                    <p class="mb-0">Browser ป้องกันการเรียก API จาก domain อื่นเพื่อความปลอดภัย</p>
+                                </div>
+                                
+                                <h6 class="mt-4">วิธีแก้ไข:</h6>
+                                
+                                <div class="accordion" id="corsAccordion">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingOne">
+                                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                                <i class="bi bi-1-circle me-2"></i>ใช้ CORS Proxy (แนะนำ)
+                                            </button>
+                                        </h2>
+                                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#corsAccordion">
+                                            <div class="accordion-body">
+                                                <p>ใช้ CORS proxy service เพื่อเรียก API:</p>
+                                                <div class="d-flex gap-2 mb-3">
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="tryCorsProxy()">
+                                                        <i class="bi bi-play-circle me-1"></i>ลองใช้ CORS Proxy
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary btn-sm" onclick="copyCorsProxyUrl()">
+                                                        <i class="bi bi-clipboard me-1"></i>คัดลอก URL
+                                                    </button>
+                                                </div>
+                                                <small class="text-muted">URL: <code id="cors-proxy-url"></code></small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingTwo">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                                <i class="bi bi-2-circle me-2"></i>ใช้ Browser Extension
+                                            </button>
+                                        </h2>
+                                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#corsAccordion">
+                                            <div class="accordion-body">
+                                                <p>ติดตั้ง CORS extension ใน browser:</p>
+                                                <ul>
+                                                    <li><strong>Chrome:</strong> "CORS Unblock" หรือ "CORS Everywhere"</li>
+                                                    <li><strong>Firefox:</strong> "CORS Everywhere"</li>
+                                                </ul>
+                                                <div class="alert alert-warning">
+                                                    <small><i class="bi bi-exclamation-triangle me-1"></i>ใช้เฉพาะใน development เท่านั้น</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingThree">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                                <i class="bi bi-3-circle me-2"></i>ใช้ cURL Command
+                                            </button>
+                                        </h2>
+                                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#corsAccordion">
+                                            <div class="accordion-body">
+                                                <p>ใช้ cURL command ใน terminal:</p>
+                                                <pre class="bg-dark text-light p-3 rounded"><code id="curl-command"></code></pre>
+                                                <button class="btn btn-outline-primary btn-sm" onclick="copyCurlCommand()">
+                                                    <i class="bi bi-clipboard me-1"></i>คัดลอก cURL Command
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // Update URLs in the modal
+            updateCorsModalUrls();
+
+            return document.getElementById('cors-modal');
+        }
+
+        function updateCorsModalUrls() {
+            const menuTemplateId = document.getElementById('menu_template_id_1').value;
+            const conceptId = document.getElementById('concept_id').value;
+            const itemId = document.getElementById('item_id_1').value;
+            const language = document.getElementById('language').value;
+
+            const originalUrl = `${urlApi}/mod-items?menu_template_id=${menuTemplateId}&concept_id=${conceptId}&language=${language}&item_id=${itemId}&limit_c_mod_group=1&limit_c_object=2&max_level=4`;
+            const corsProxyUrl = `https://cors-anywhere.herokuapp.com/${originalUrl}`;
+            const curlCommand = `curl --location '${originalUrl}' \\
+--header 'accept: */*' \\
+--header 'accept-language: th' \\
+--header 'cache-control: no-cache' \\
+--header 'content-type: application/json' \\
+--header 'dnt: 1' \\
+--header 'language: th' \\
+--header 'origin: https://fe-dev.1112dev.com' \\
+--header 'platform: website' \\
+--header 'pragma: no-cache' \\
+--header 'priority: u=1, i' \\
+--header 'referer: https://fe-dev.1112dev.com/' \\
+--header 'sec-ch-ua: "Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"' \\
+--header 'sec-ch-ua-mobile: ?0' \\
+--header 'sec-ch-ua-platform: "Windows"' \\
+--header 'sec-fetch-dest: empty' \\
+--header 'sec-fetch-mode: cors' \\
+--header 'sec-fetch-site: same-site' \\
+--header 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36'`;
+
+            const corsProxyElement = document.getElementById('cors-proxy-url');
+            const curlCommandElement = document.getElementById('curl-command');
+
+            if (corsProxyElement) corsProxyElement.textContent = corsProxyUrl;
+            if (curlCommandElement) curlCommandElement.textContent = curlCommand;
+        }
+
+        // CORS Proxy functions
+        window.tryCorsProxy = async function () {
+            const menuTemplateId = document.getElementById('menu_template_id_1').value;
+            const conceptId = document.getElementById('concept_id').value;
+            const itemId = document.getElementById('item_id_1').value;
+            const language = document.getElementById('language').value;
+
+            const originalUrl = `${urlApi}/mod-items?menu_template_id=${menuTemplateId}&concept_id=${conceptId}&language=${language}&item_id=${itemId}&limit_c_mod_group=1&limit_c_object=2&max_level=4`;
+            const corsProxyUrl = `https://cors-anywhere.herokuapp.com/${originalUrl}`;
+
+            try {
+                showAlert('กำลังลองใช้ CORS Proxy...', 'info');
+
+                const response = await fetch(corsProxyUrl, {
+                    method: 'GET',
+                    headers: {
+                        'accept': '*/*',
+                        'accept-language': 'th',
+                        'content-type': 'application/json',
+                        'language': 'th',
+                        'platform': 'website'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                currentItemData = data;
+                renderItemDetails(currentItemData);
+
+                showAlert('ดึงข้อมูลสำเร็จด้วย CORS Proxy!', 'success');
+
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('cors-modal'));
+                if (modal) modal.hide();
+
+            } catch (error) {
+                console.error('CORS Proxy error:', error);
+                showAlert(`CORS Proxy ล้มเหลว: ${error.message}`, 'danger');
+            }
+        };
+
+        window.copyCorsProxyUrl = function () {
+            const menuTemplateId = document.getElementById('menu_template_id_1').value;
+            const conceptId = document.getElementById('concept_id').value;
+            const itemId = document.getElementById('item_id_1').value;
+            const language = document.getElementById('language').value;
+
+            const originalUrl = `${urlApi}/mod-items?menu_template_id=${menuTemplateId}&concept_id=${conceptId}&language=${language}&item_id=${itemId}&limit_c_mod_group=1&limit_c_object=2&max_level=4`;
+            const corsProxyUrl = `https://cors-anywhere.herokuapp.com/${originalUrl}`;
+
+            navigator.clipboard.writeText(corsProxyUrl).then(() => {
+                showAlert('คัดลอก CORS Proxy URL แล้ว!', 'success');
+            }).catch(err => {
+                showAlert('การคัดลอกล้มเหลว', 'danger');
+            });
+        };
+
+        window.copyCurlCommand = function () {
+            const curlCommandElement = document.getElementById('curl-command');
+            if (curlCommandElement) {
+                navigator.clipboard.writeText(curlCommandElement.textContent).then(() => {
+                    showAlert('คัดลอก cURL Command แล้ว!', 'success');
+                }).catch(err => {
+                    showAlert('การคัดลอกล้มเหลว', 'danger');
+                });
+            }
+        };
+
+
+        fetchButton.addEventListener('click', async () => {
+            // Disable button and show loading
+            fetchButton.disabled = true;
+            fetchButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>กำลังดึงข้อมูล...';
+
+            try {
+                const menuTemplateId = document.getElementById('menu_template_id_1').value;
+                const conceptId = document.getElementById('concept_id').value;
+                const itemId = document.getElementById('item_id_1').value;
+                const language = document.getElementById('language').value;
+                const limitCModGroup = document.getElementById('limit_c_mod_group').value;
+                const limitCObject = document.getElementById('limit_c_object').value;
+                const maxLevel = document.getElementById('max_level').value;
+
+                const apiUrl = `${urlApi}/mod-items?menu_template_id=${menuTemplateId}&concept_id=${conceptId}&language=${language}&item_id=${itemId}&limit_c_mod_group=${limitCModGroup}&limit_c_object=${limitCObject}&max_level=${maxLevel}`;
+
+
+                // Try with minimal headers first to avoid CORS issues
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit',
+                    headers: {
+                        'accept': '*/*',
+                        'accept-language': 'th',
+                        'content-type': 'application/json',
+                        'language': 'th',
+                        'platform': 'website'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                currentItemData = data;
+                renderItemDetails(currentItemData);
+
+                // Show success message
+                showAlert('ดึงข้อมูลสำเร็จ!', 'success');
+
+            } catch (error) {
+                console.error('Error fetching item data:', error);
+
+                // Check if it's a CORS error
+                if (error.message.includes('CORS') || error.message.includes('cross-origin') || error.name === 'TypeError') {
+                    showAlert('เกิดปัญหา CORS - กำลังใช้ข้อมูลตัวอย่าง', 'warning');
+
+                    // Show CORS solution
+                    showCorsSolution();
+                } else {
+                    showAlert(`เกิดข้อผิดพลาด: ${error.message}`, 'danger');
+                }
+
+                // Fallback to mock data for development with nested mods
+                const mockResponse = {
+                    "id": 670130, "long_name": "Hot Americano-S-TA", "short_name": "Hot Americano-S", "price": 115, "has_elements": true, "element_type": 0,
+                    "mod_groups": [
+                        {
+                            "id": 10030, "long_name": "", "short_name": "--Bean Select", "price": 0, "has_elements": true, "element_type": 0, "description": "", "category": "", "is_available": true,
+                            "mods": [
+                                {
+                                    "id": 643356, "long_name": "SIGNATURE_ROAST", "short_name": "SIGNATURE_ROAST", "price": 0, "has_elements": true, "element_type": 0, "description": "", "category": "", "is_available": true,
+                                    "mods": [
+                                        { "id": 6433561, "long_name": "LIGHT_ROAST", "short_name": "LIGHT_ROAST", "price": 0, "has_elements": false, "element_type": 0, "description": "", "category": "", "is_available": true, "mods": [], "mods_count": 0 },
+                                        { "id": 6433562, "long_name": "DARK_ROAST", "short_name": "DARK_ROAST", "price": 5, "has_elements": false, "element_type": 0, "description": "", "category": "", "is_available": true, "mods": [], "mods_count": 0 }
+                                    ],
+                                    "mods_count": 2
+                                },
+                                {
+                                    "id": 643355, "long_name": "SIAM_BLEND", "short_name": "SIAM_BLEND", "price": 0, "has_elements": true, "element_type": 0, "description": "", "category": "", "is_available": true,
+                                    "mods": [
+                                        { "id": 6433551, "long_name": "ORIGINAL", "short_name": "ORIGINAL", "price": 0, "has_elements": false, "element_type": 0, "description": "", "category": "", "is_available": true, "mods": [], "mods_count": 0 },
+                                        { "id": 6433552, "long_name": "PREMIUM", "short_name": "PREMIUM", "price": 10, "has_elements": false, "element_type": 0, "description": "", "category": "", "is_available": true, "mods": [], "mods_count": 0 }
+                                    ],
+                                    "mods_count": 2
+                                }
+                            ],
+                            "mods_count": 2
+                        },
+                        {
+                            "id": 10031, "long_name": "", "short_name": "--Size Options", "price": 0, "has_elements": true, "element_type": 0, "description": "", "category": "", "is_available": true,
+                            "mods": [
+                                { "id": 643357, "long_name": "SMALL", "short_name": "S", "price": 0, "has_elements": false, "element_type": 0, "description": "", "category": "", "is_available": true, "mods": [], "mods_count": 0 },
+                                { "id": 643358, "long_name": "MEDIUM", "short_name": "M", "price": 10, "has_elements": false, "element_type": 0, "description": "", "category": "", "is_available": true, "mods": [], "mods_count": 0 },
+                                { "id": 643359, "long_name": "LARGE", "short_name": "L", "price": 20, "has_elements": false, "element_type": 0, "description": "", "category": "", "is_available": true, "mods": [], "mods_count": 0 }
+                            ],
+                            "mods_count": 3
+                        }
+                    ],
+                    "mod_groups_count": 2
+                };
+                currentItemData = mockResponse;
+                renderItemDetails(currentItemData);
+            } finally {
+                // Re-enable button
+                fetchButton.disabled = false;
+                fetchButton.innerHTML = '<i class="bi bi-search me-2"></i>ดึงข้อมูลไอเท็ม';
+            }
+        });
+
+        function renderItemDetails(data) {
+            const container = document.getElementById('item-details');
+            const maxLevel = parseInt(document.getElementById('max_level').value) || 4;
+
+            let html = `
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title h5 text-dark">${data.short_name}</h3>
+                        <p class="card-text text-muted">ID: ${data.id} | ราคา: ${data.price} บาท</p>
+                        <small class="text-info">Max Level: ${maxLevel}</small>
+                </div>
+                </div>
+                <h4 class="h5 fw-semibold mb-3 text-dark">เลือกตัวเลือก (Mods):</h4>
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>สามารถเลือกได้หลายตัว:</strong> ใช้ checkbox เพื่อเลือก mods หลายตัวในแต่ละ level ตาม max_level ที่กำหนด
+                </div>
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <button id="select-all-mods" class="btn btn-outline-primary btn-sm me-2">
+                            <i class="bi bi-check-square me-1"></i>เลือกทั้งหมด
+                        </button>
+                        <button id="deselect-all-mods" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-square me-1"></i>ยกเลิกทั้งหมด
+                        </button>
+                    </div>
+                    <div>
+                        <span id="selected-count" class="badge bg-primary">เลือกแล้ว: 0 ตัว</span>
+                    </div>
+                </div>`;
+
+            if (data.mod_groups && data.mod_groups.length > 0) {
+                data.mod_groups.forEach(group => {
+                    html += `
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0 fw-semibold">${group.short_name}</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-2">`;
+
+                    group.mods.forEach(mod => {
+                        html += renderModWithLevels(mod, group.id, 0, maxLevel);
+                    });
+
+                    html += `   </div>
+                             </div>
+                        </div>`;
+                });
+
+                // เพิ่มปุ่ม "เพิ่มลงในรายการ"
+                html += `
+                    <div class="mt-4">
+                        <button id="add-to-cart-btn" class="btn btn-success btn-lg w-100">
+                            <i class="bi bi-cart-plus me-2"></i>
+                            เพิ่มลงในรายการ
+                        </button>
+                    </div>
+                `;
+            } else {
+                html += '<p class="text-muted">ไม่มีตัวเลือกเพิ่มเติมสำหรับไอเท็มนี้</p>';
+
+                // เพิ่มปุ่ม "เพิ่มลงในรายการ" แม้ไม่มี mods
+                html += `
+                    <div class="mt-4">
+                        <button id="add-to-cart-btn" class="btn btn-success btn-lg w-100">
+                            <i class="bi bi-cart-plus me-2"></i>
+                            เพิ่มลงในรายการ
+                        </button>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+
+            // เพิ่ม event listener สำหรับปุ่ม "เพิ่มลงในรายการ"
+            const addToCartBtn = document.getElementById('add-to-cart-btn');
+            if (addToCartBtn) {
+                addToCartBtn.addEventListener('click', () => {
+                    const selectedMods = getAllSelectedMods();
+                    addItemToCart(data, selectedMods);
+                });
+            }
+
+            // เพิ่ม event listener สำหรับปุ่ม "เลือกทั้งหมด" และ "ยกเลิกทั้งหมด"
+            const selectAllBtn = document.getElementById('select-all-mods');
+            const deselectAllBtn = document.getElementById('deselect-all-mods');
+
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', () => {
+                    const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+                    allCheckboxes.forEach(checkbox => {
+                        checkbox.checked = true;
+                    });
+                    updateSelectedCount();
+                });
+            }
+
+            if (deselectAllBtn) {
+                deselectAllBtn.addEventListener('click', () => {
+                    const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+                    allCheckboxes.forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    updateSelectedCount();
+                });
+            }
+
+            // เพิ่ม event listener สำหรับ checkbox ทั้งหมด
+            const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+            allCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectedCount);
+            });
+
+            // อัปเดตจำนวนครั้งแรก
+            updateSelectedCount();
+        }
+
+        // ฟังก์ชันสำหรับอัปเดตจำนวน mods ที่เลือก
+        function updateSelectedCount() {
+            const selectedCount = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const countElement = document.getElementById('selected-count');
+            if (countElement) {
+                countElement.textContent = `เลือกแล้ว: ${selectedCount} ตัว`;
+            }
+        }
+
+        // ฟังก์ชันสำหรับ render mod พร้อม sub-mods ตาม max_level
+        function renderModWithLevels(mod, groupId, currentLevel, maxLevel) {
+            let html = '';
+            const indentClass = `ms-${Math.min(currentLevel * 2, 8)}`;
+            const levelColor = getLevelColor(currentLevel);
+
+            // Render mod หลัก
+            html += `
+                <div class="col-12 col-md-6">
+                    <div class="form-check ${indentClass}">
+                        <input id="mod-${mod.id}" name="mod-group-${groupId}" type="checkbox" class="form-check-input"
+                               data-id="${mod.id}" data-name="${mod.short_name}" data-price="${mod.price}" data-level="${currentLevel}">
+                        <label for="mod-${mod.id}" class="form-check-label w-100 p-2 border rounded bg-white text-dark hover-bg-light ${levelColor}">
+                            <span class="fw-medium">${mod.short_name}</span>
+                            <span class="text-muted small ms-2">(+${mod.price} บาท)</span>
+                            ${currentLevel > 0 ? `<small class="text-muted d-block">Level ${currentLevel}</small>` : ''}
+                        </label>
+                    </div>
+                </div>
+            `;
+
+            // Render sub-mods ถ้ายังไม่เกิน max_level
+            if (mod.mods && mod.mods.length > 0 && currentLevel < maxLevel) {
+                html += `
+                    <div class="col-12">
+                        <div class="ms-4 mt-2">
+                            <div class="row g-2">
+                `;
+
+                mod.mods.forEach(subMod => {
+                    html += renderModWithLevels(subMod, groupId, currentLevel + 1, maxLevel);
+                });
+
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        // ฟังก์ชันสำหรับดึงสีตาม level
+        function getLevelColor(level) {
+            switch (level) {
+                case 0: return 'border-primary';
+                case 1: return 'border-success';
+                case 2: return 'border-warning';
+                case 3: return 'border-info';
+                case 4: return 'border-danger';
+                default: return 'border-secondary';
+            }
+        }
+
+        // ฟังก์ชันสำหรับดึง mods ที่เลือกทั้งหมด (รวม sub-mods)
+        function getAllSelectedMods() {
+            const selectedMods = [];
+            const checkedInputs = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'));
+
+            checkedInputs.forEach(input => {
+                const level = parseInt(input.dataset.level) || 0;
+                const mod = {
+                    id: parseInt(input.dataset.id),
+                    name: input.dataset.name,
+                    price: parseFloat(input.dataset.price),
+                    quantity: 1,
+                    level: level
+                };
+
+                // ตรวจสอบว่าเป็น sub-mod หรือไม่
+                const parentMod = findParentMod(input);
+                if (parentMod) {
+                    mod.parentId = parentMod.id;
+                    mod.parentName = parentMod.name;
+                }
+
+                selectedMods.push(mod);
+            });
+            return selectedMods;
+        }
+
+        // ฟังก์ชันสำหรับหา parent mod
+        function findParentMod(input) {
+            const currentLevel = parseInt(input.dataset.level) || 0;
+            if (currentLevel === 0) return null;
+
+            // หา parent mod ที่อยู่ใน level ก่อนหน้า
+            const allInputs = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+
+            // หา parent mod ที่อยู่ใน level ก่อนหน้าและอยู่ในกลุ่มเดียวกัน
+            const parentInput = allInputs.find(inp => {
+                const inpLevel = parseInt(inp.dataset.level) || 0;
+                const inpGroupId = inp.name.split('-')[2]; // mod-group-{groupId}
+                const currentGroupId = input.name.split('-')[2];
+
+                return inpLevel === currentLevel - 1 &&
+                    inpGroupId === currentGroupId &&
+                    inp.checked; // เพิ่มเงื่อนไขว่า parent ต้องถูกเลือกด้วย
+            });
+
+            if (parentInput) {
+                return {
+                    id: parseInt(parentInput.dataset.id),
+                    name: parentInput.dataset.name
+                };
+            }
+
+            return null;
+        }
+
+        function createOrderPayload() {
+            if (selectedItems.length === 0) {
+                alert('กรุณาเพิ่ม Items ลงในรายการก่อนครับ');
+                return null;
+            }
+
+            // สร้าง items array จาก selectedItems พร้อมจัดกลุ่ม mods ตาม hierarchy
+            const items = selectedItems.map(item => {
+                // จัดกลุ่ม mods ตาม level และ parent
+                const groupedMods = item.selectedMods.reduce((groups, mod) => {
+                    if (mod.level === 0) {
+                        // Main mod (level 0)
+                        if (!groups.main) groups.main = [];
+                        groups.main.push(mod);
+                    } else {
+                        // Sub mod (level > 0) - ใช้ parentId เป็น key
+                        const parentKey = mod.parentId || 'orphaned';
+                        if (!groups[parentKey]) groups[parentKey] = [];
+                        groups[parentKey].push(mod);
+                    }
+                    return groups;
+                }, {});
+
+
+                // สร้าง hierarchical structure แบบ nested mods
+                const hierarchicalMods = [];
+
+                // เพิ่ม main mods ก่อน
+                if (groupedMods.main) {
+                    groupedMods.main.forEach(mainMod => {
+                        // หา child mods ที่มี parentId ตรงกับ mainMod.id
+                        const childMods = groupedMods[mainMod.id] || [];
+
+                        // สร้าง main mod object พร้อม mods array สำหรับ child mods
+                        const mainModObj = {
+                            id: mainMod.id,
+                            name: mainMod.name,
+                            price: mainMod.price,
+                            mods: childMods.map(childMod => ({
+                                id: childMod.id,
+                                name: childMod.name,
+                                price: childMod.price,
+                                mods: [],
+                                mods_count: 0
+                            })),
+                            mods_count: childMods.length
+                        };
+                        hierarchicalMods.push(mainModObj);
+                    });
+                }
+
+                // เพิ่ม orphaned sub mods (ถ้ามี) - mods ที่ไม่มี parent
+                Object.keys(groupedMods).forEach(key => {
+                    if (key !== 'main' && key !== 'orphaned' && !groupedMods.main?.some(main => main.id === parseInt(key))) {
+                        const orphanedModObj = {
+                            id: parseInt(key),
+                            name: groupedMods[key][0]?.parentName || 'Unknown',
+                            price: 0,
+                            mods: groupedMods[key].map(childMod => ({
+                                id: childMod.id,
+                                name: childMod.name,
+                                price: childMod.price,
+                                mods: [],
+                                mods_count: 0
+                            })),
+                            mods_count: groupedMods[key].length
+                        };
+                        hierarchicalMods.push(orphanedModObj);
+                    }
+                });
+
+
+                return {
+                    mods: hierarchicalMods,
+                    id: item.id,
+                    name: item.short_name,
+                    price: item.price,
+                    quantity: item.quantity
+                };
+            });
+
+            // คำนวณราคารวม
+            const totalAmount = selectedItems.reduce((sum, item) => {
+                const totalModsPrice = item.selectedMods.reduce((modSum, mod) => modSum + mod.price, 0);
+                const finalPrice = item.price + totalModsPrice;
+                return sum + (finalPrice * item.quantity);
+            }, 0);
+
+            return {
+                brand: document.getElementById('brand').value,
+                contact_info: { name: document.getElementById('customer_name').value, phone_number: document.getElementById('customer_phone').value },
+                customer_info: { name: document.getElementById('customer_name').value, phone_number: document.getElementById('customer_phone').value },
+                external_order_id: crypto.randomUUID(),
+                items: items,
+                payment: { amount: totalAmount, discount: 0, method: document.getElementById('payment_method').value, value: totalAmount, credit_card_no: document.getElementById('credit_card_no').value, credit_card_holder_name: document.getElementById('credit_card_holder_name').value },
+                store_id: parseInt(document.getElementById('store_id').value),
+                bu_code: parseInt(document.getElementById('bu_code').value),
+                menu_template_id: parseInt(document.getElementById('menu_template_id_2').value),
+                submitted_at: new Date().toISOString()
+            };
+        }
+
+        buildButton.addEventListener('click', () => {
+            const orderPayload = createOrderPayload();
+            if (!orderPayload) return;
+
+            const jsonString = JSON.stringify(orderPayload, null, 4);
+            const curlCommand = buildCurlCommand(jsonString);
+
+            renderOutput(jsonString, curlCommand);
+            responseContainer.innerHTML = ''; // Clear previous response
+        });
+
+        sendButton.addEventListener('click', async () => {
+            const orderPayload = createOrderPayload();
+            if (!orderPayload) return;
+
+            outputContainer.innerHTML = '';
+            responseContainer.innerHTML = '';
+            loadingSpinner.classList.remove('d-none');
+            [fetchButton, buildButton, sendButton].forEach(btn => btn.disabled = true);
+
+            try {
+                const authToken = document.getElementById('auth_token').value;
+
+                const response = await fetch('https://api.uat.minorunity.com/customer-bff/order/v1/orders', {
+                    method: 'POST',
+                    mode: 'cors',
+                    credentials: 'omit',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderPayload)
+                });
+
+                const responseData = await response.json();
+                renderApiResponse(responseData, response.status);
+
+                if (response.ok) {
+                    showAlert('ส่งคำสั่งซื้อสำเร็จ!', 'success');
+                } else {
+                    showAlert(`เกิดข้อผิดพลาด: ${responseData.message || 'ไม่สามารถส่งคำสั่งซื้อได้'}`, 'danger');
+                }
+
+            } catch (error) {
+                console.error('Error sending order:', error);
+
+                // Check if it's a CORS error
+                if (error.message.includes('CORS') || error.message.includes('cross-origin') || error.name === 'TypeError') {
+                    showAlert('เกิดปัญหา CORS - กำลังใช้ข้อมูลตัวอย่าง', 'warning');
+                    showCorsSolutionForOrder();
+                } else {
+                    showAlert(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${error.message}`, 'danger');
+                }
+
+                // Fallback to mock response for development
+                const mockResponse = {
+                    "status": "success",
+                    "order_id": orderPayload.external_order_id,
+                    "message": "Order created successfully (Mock Response)",
+                    "received_at": new Date().toISOString()
+                };
+                renderApiResponse(mockResponse, 201);
+            } finally {
+                loadingSpinner.classList.add('d-none');
+                [fetchButton, buildButton, sendButton].forEach(btn => btn.disabled = false);
+            }
+        });
+
+        function buildCurlCommand(jsonData) {
+            const authToken = document.getElementById('auth_token').value;
+            const escapedJson = jsonData.replace(/'/g, "'\\''");
+            return `curl --location 'https://api.uat.minorunity.com/customer-bff/order/v1/orders' \\\n--header 'Authorization: Bearer ${authToken}' \\\n--header 'Content-Type: application/json' \\\n--header 'Cookie: _cfuvid=FvKgjdJCesp8JK926Wxws9S95I9FL74XGu4NTsfs4Jo-1761040271542-0.0.1.1-604800000' \\\n--data '${escapedJson}'`;
+        }
+
+        function showCorsSolutionForOrder() {
+            const corsModal = document.getElementById('cors-order-modal') || createCorsOrderModal();
+            const modal = new bootstrap.Modal(corsModal);
+            modal.show();
+        }
+
+        function createCorsOrderModal() {
+            const modalHtml = `
+                <div class="modal fade" id="cors-order-modal" tabindex="-1" aria-labelledby="corsOrderModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="corsOrderModalLabel">
+                                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                                    วิธีแก้ปัญหา CORS สำหรับการส่ง Order
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="bi bi-info-circle me-2"></i>สาเหตุของปัญหา CORS</h6>
+                                    <p class="mb-0">Browser ป้องกันการส่ง POST request ไปยัง API จาก domain อื่น</p>
+                                </div>
+                                
+                                <h6 class="mt-4">วิธีแก้ไข:</h6>
+                                
+                                <div class="accordion" id="corsOrderAccordion">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingOrderOne">
+                                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOrderOne" aria-expanded="true" aria-controls="collapseOrderOne">
+                                                <i class="bi bi-1-circle me-2"></i>ใช้ cURL Command (แนะนำ)
+                                            </button>
+                                        </h2>
+                                        <div id="collapseOrderOne" class="accordion-collapse collapse show" aria-labelledby="headingOrderOne" data-bs-parent="#corsOrderAccordion">
+                                            <div class="accordion-body">
+                                                <p>ใช้ cURL command ใน terminal เพื่อส่ง order:</p>
+                                                <pre class="bg-dark text-light p-3 rounded"><code id="order-curl-command"></code></pre>
+                                                <button class="btn btn-outline-primary btn-sm" onclick="copyOrderCurlCommand()">
+                                                    <i class="bi bi-clipboard me-1"></i>คัดลอก cURL Command
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingOrderTwo">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOrderTwo" aria-expanded="false" aria-controls="collapseOrderTwo">
+                                                <i class="bi bi-2-circle me-2"></i>ใช้ Postman/Insomnia
+                                            </button>
+                                        </h2>
+                                        <div id="collapseOrderTwo" class="accordion-collapse collapse" aria-labelledby="headingOrderTwo" data-bs-parent="#corsOrderAccordion">
+                                            <div class="accordion-body">
+                                                <p>ใช้ API testing tools:</p>
+                                                <ul>
+                                                    <li><strong>Postman:</strong> Import cURL command</li>
+                                                    <li><strong>Insomnia:</strong> Import cURL command</li>
+                                                    <li><strong>Thunder Client (VS Code):</strong> Import cURL command</li>
+                                                </ul>
+                                                <div class="alert alert-success">
+                                                    <small><i class="bi bi-check-circle me-1"></i>วิธีนี้จะทำงานได้เสมอ</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingOrderThree">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOrderThree" aria-expanded="false" aria-controls="collapseOrderThree">
+                                                <i class="bi bi-3-circle me-2"></i>ใช้ Browser Extension
+                                            </button>
+                                        </h2>
+                                        <div id="collapseOrderThree" class="accordion-collapse collapse" aria-labelledby="headingOrderThree" data-bs-parent="#corsOrderAccordion">
+                                            <div class="accordion-body">
+                                                <p>ติดตั้ง CORS extension ใน browser:</p>
+                                                <ul>
+                                                    <li><strong>Chrome:</strong> "CORS Unblock" หรือ "CORS Everywhere"</li>
+                                                    <li><strong>Firefox:</strong> "CORS Everywhere"</li>
+                                                </ul>
+                                                <div class="alert alert-warning">
+                                                    <small><i class="bi bi-exclamation-triangle me-1"></i>ใช้เฉพาะใน development เท่านั้น</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // Update cURL command in the modal
+            updateOrderCurlCommand();
+
+            return document.getElementById('cors-order-modal');
+        }
+
+        function updateOrderCurlCommand() {
+            const orderPayload = createOrderPayload();
+            if (!orderPayload) return;
+
+            const authToken = document.getElementById('auth_token').value;
+            const jsonData = JSON.stringify(orderPayload, null, 2);
+            const escapedJson = jsonData.replace(/'/g, "'\\''");
+
+            const curlCommand = `curl --location 'https://api.uat.minorunity.com/customer-bff/order/v1/orders' \\
+--header 'Authorization: Bearer ${authToken}' \\
+--header 'Content-Type: application/json' \\
+--header 'Cookie: _cfuvid=FvKgjdJCesp8JK926Wxws9S95I9FL74XGu4NTsfs4Jo-1761040271542-0.0.1.1-604800000' \\
+--data '${escapedJson}'`;
+
+            const curlCommandElement = document.getElementById('order-curl-command');
+            if (curlCommandElement) {
+                curlCommandElement.textContent = curlCommand;
+            }
+        }
+
+        window.copyOrderCurlCommand = function () {
+            const curlCommandElement = document.getElementById('order-curl-command');
+            if (curlCommandElement) {
+                navigator.clipboard.writeText(curlCommandElement.textContent).then(() => {
+                    showAlert('คัดลอก cURL Command แล้ว!', 'success');
+                }).catch(err => {
+                    showAlert('การคัดลอกล้มเหลว', 'danger');
+                });
+            }
+        };
+
+        // เพิ่ม event listener สำหรับปุ่มล้างข้อมูล
+        clearItemsButton.addEventListener('click', () => {
+            selectedItems = [];
+            currentItemData = null;
+            renderSelectedItems();
+            document.getElementById('item-details').innerHTML = '';
+            showAlert('ล้างข้อมูล Items เรียบร้อยแล้ว!', 'success');
+        });
+
+        // เรียกใช้ renderSelectedItems เมื่อโหลดหน้า
+        renderSelectedItems();
+
+        // เพิ่มฟังก์ชันสำหรับเพิ่ม item ลงในรายการ
+        function addItemToCart(itemData, selectedMods) {
+            const itemId = itemData.id;
+
+            // ตรวจสอบว่า item นี้มีอยู่แล้วหรือไม่
+            const existingItemIndex = selectedItems.findIndex(item => item.id === itemId);
+
+            if (existingItemIndex !== -1) {
+                // อัปเดต item ที่มีอยู่แล้ว
+                selectedItems[existingItemIndex] = {
+                    ...itemData,
+                    selectedMods: selectedMods,
+                    quantity: selectedItems[existingItemIndex].quantity + 1
+                };
+            } else {
+                // เพิ่ม item ใหม่
+                selectedItems.push({
+                    ...itemData,
+                    selectedMods: selectedMods,
+                    quantity: 1
+                });
+            }
+
+            renderSelectedItems();
+            showAlert('เพิ่ม Item ลงในรายการแล้ว!', 'success');
+        }
+
+        // เพิ่มฟังก์ชันสำหรับแสดงรายการ items ที่เลือก
+        function renderSelectedItems() {
+            const container = document.getElementById('items-list');
+
+            if (selectedItems.length === 0) {
+                container.innerHTML = '<div class="col-12"><p class="text-muted">ยังไม่มี Items ในรายการ</p></div>';
+                return;
+            }
+
+            let html = '';
+            selectedItems.forEach((item, index) => {
+                const totalModsPrice = item.selectedMods.reduce((sum, mod) => sum + mod.price, 0);
+                const finalPrice = item.price + totalModsPrice;
+
+                html += `
+                    <div class="col-12 col-md-6">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0">${item.short_name}</h6>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="removeItem(${index})">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                                <p class="card-text small text-muted mb-2">ID: ${item.id}</p>
+                <div class="mb-2">
+                    <small class="text-muted">
+                        <strong>Mods:</strong> 
+                        ${item.selectedMods.length > 0 ?
+                        item.selectedMods.map(mod =>
+                            mod.level > 0 ?
+                                `<span class="badge bg-light text-dark me-1">${mod.parentName} → ${mod.name}</span>` :
+                                `<span class="badge bg-primary me-1">${mod.name}</span>`
+                        ).join(' ') :
+                        '<span class="text-muted">ไม่มี</span>'
+                    }
+                    </small>
+                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-primary">${finalPrice} บาท</span>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-secondary" onclick="updateQuantity(${index}, -1)">-</button>
+                                        <span class="btn btn-outline-secondary disabled">${item.quantity}</span>
+                                        <button class="btn btn-outline-secondary" onclick="updateQuantity(${index}, 1)">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ฟังก์ชันสำหรับลบ item
+        window.removeItem = function (index) {
+            selectedItems.splice(index, 1);
+            renderSelectedItems();
+            showAlert('ลบ Item ออกจากรายการแล้ว!', 'info');
+        };
+
+        // ฟังก์ชันสำหรับอัปเดตจำนวน
+        window.updateQuantity = function (index, change) {
+            const newQuantity = selectedItems[index].quantity + change;
+            if (newQuantity <= 0) {
+                removeItem(index);
+            } else {
+                selectedItems[index].quantity = newQuantity;
+                renderSelectedItems();
+            }
+        };
+
+        function renderOutput(jsonString, curlCommand) {
+
+            // สร้าง hierarchical mods display แบบ nested structure
+            const modsDisplay = selectedItems.map(item => {
+                // จัดกลุ่ม mods ตาม level และ parent
+                const groupedMods = item.selectedMods.reduce((groups, mod) => {
+                    if (mod.level === 0) {
+                        if (!groups.main) groups.main = [];
+                        groups.main.push(mod);
+                    } else {
+                        const parentKey = mod.parentId || 'orphaned';
+                        if (!groups[parentKey]) groups[parentKey] = [];
+                        groups[parentKey].push(mod);
+                    }
+                    return groups;
+                }, {});
+
+                // สร้าง HTML สำหรับแสดง nested structure
+                let modsHtml = '';
+
+                if (groupedMods.main) {
+                    groupedMods.main.forEach(mainMod => {
+                        modsHtml += `<div class="mb-2"><strong>${mainMod.name}</strong> (+${mainMod.price} บาท)`;
+
+                        if (groupedMods[mainMod.id] && groupedMods[mainMod.id].length > 0) {
+                            modsHtml += '<div class="ms-3">';
+                            groupedMods[mainMod.id].forEach(childMod => {
+                                modsHtml += `<div class="text-muted">└─ ${childMod.name} (+${childMod.price} บาท)</div>`;
+                            });
+                            modsHtml += '</div>';
+                        }
+                        modsHtml += '</div>';
+                    });
+                }
+
+                return `
+                    <div class="card mb-2">
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-2">${item.short_name} (${item.quantity}x)</h6>
+                            <div class="mods-hierarchy">
+                                ${modsHtml || '<small class="text-muted">ไม่มี mods</small>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            outputContainer.innerHTML = `
+                <!-- Selected Items Debug -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title h6 mb-0 d-flex align-items-center">
+                            <i class="bi bi-bug me-2 text-muted"></i>
+                            Debug: Selected Items
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <pre class="bg-light p-3 rounded"><code>${JSON.stringify(selectedItems, null, 2)}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Mods Hierarchy Display -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title h6 mb-0 d-flex align-items-center">
+                            <i class="bi bi-diagram-3 me-2 text-muted"></i>
+                            Mods Hierarchy Structure
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        ${modsDisplay || '<p class="text-muted">ไม่มี items ในรายการ</p>'}
+                    </div>
+                </div>
+
+                <!-- JSON Body Output -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title h6 mb-0 d-flex align-items-center">
+                            <i class="bi bi-code-square me-2 text-muted"></i>
+                            JSON Body
+                        </h3>
+                        <button class="btn btn-outline-primary btn-sm" onclick="copyToClipboard('json-output')">
+                            <i class="bi bi-clipboard me-1"></i>คัดลอก
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <pre id="json-output" class="code-block mb-0"><code>${jsonString}</code></pre>
+                    </div>
+                </div>
+                
+                <!-- cURL Command Output -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title h6 mb-0 d-flex align-items-center">
+                            <i class="bi bi-terminal me-2 text-muted"></i>
+                            cURL Command
+                        </h3>
+                        <button class="btn btn-outline-primary btn-sm" onclick="copyToClipboard('curl-output', true)">
+                            <i class="bi bi-clipboard me-1"></i>คัดลอก
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <textarea id="curl-output" readonly class="form-control border-0 bg-dark text-light font-monospace small" rows="8" style="resize: none;">${curlCommand}</textarea>
+                    </div>
+                </div>`;
+        }
+
+        function renderApiResponse(data, status) {
+            const isSuccess = status >= 200 && status < 300;
+            const statusColor = isSuccess ? 'text-success' : 'text-danger';
+            const statusText = isSuccess ? 'Success' : 'Error';
+            const bgColor = isSuccess ? 'bg-dark' : 'bg-danger bg-opacity-10';
+            const textColor = isSuccess ? 'text-light' : 'text-danger';
+
+            responseContainer.innerHTML = `
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title h6 mb-0 d-flex align-items-center">
+                            <i class="bi bi-arrow-return-right me-2 text-muted"></i>
+                            API Response: <span class="${statusColor} ms-2">${status} (${statusText})</span>
+                        </h3>
+                        <button class="btn btn-outline-primary btn-sm" onclick="copyToClipboard('api-response-content')">
+                            <i class="bi bi-clipboard me-1"></i>คัดลอก
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <pre id="api-response-content" class="code-block mb-0 ${bgColor} ${textColor}"><code>${JSON.stringify(data, null, 4)}</code></pre>
+                    </div>
+                </div>
+            `;
+        }
+
+        function copyToClipboard(elementId, isTextarea = false) {
+            const element = document.getElementById(elementId);
+            let textToCopy;
+
+            if (isTextarea) {
+                textToCopy = element.value;
+            } else {
+                textToCopy = element.querySelector('code').textContent;
+            }
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('คัดลอกไปยัง Clipboard แล้ว!');
+            }).catch(err => {
+                console.error('ไม่สามารถคัดลอกได้: ', err);
+                alert('การคัดลอกล้มเหลว');
+            });
+        }
+
+        getAuthTokenBtn.addEventListener('click', async () => {
+            // Disable button and show loading
+            getAuthTokenBtn.disabled = true;
+            getAuthTokenBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>กำลังดึง Token...';
+
+            try {
+                // Get username and password from form inputs
+                const username = document.getElementById('auth_username').value;
+                const password = document.getElementById('auth_password').value;
+
+                if (!username || !password) {
+                    throw new Error('กรุณากรอก Username และ Password');
+                }
+
+                const response = await fetch('https://api.uat.minorunity.com/customer-bff/order/v1/auth/token', {
+                    method: 'POST',
+                    mode: 'cors',
+                    credentials: 'omit',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "username": username,
+                        "password": password
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success && data.data && data.data.access_token) {
+                    // Update the auth token field
+                    document.getElementById('auth_token').value = data.data.access_token;
+                    showAlert('ดึง Token สำเร็จ!', 'success');
+
+                    // Show token info
+                    const tokenInfo = `
+                <div class="alert alert-info mt-2">
+                    <h6><i class="bi bi-info-circle me-2"></i>Token Information</h6>
+                    <small>
+                        <strong>Username:</strong> ${username}<br>
+                        <strong>Token Type:</strong> ${data.data.token_type}<br>
+                        <strong>Expires In:</strong> ${data.data.expires_in} seconds<br>
+                        <strong>Expires At:</strong> ${new Date(data.data.expires_at).toLocaleString('th-TH')}
+                    </small>
+                </div>
+            `;
+
+                    // Remove existing token info if any
+                    const existingInfo = document.getElementById('token-info');
+                    if (existingInfo) {
+                        existingInfo.remove();
+                    }
+
+                    // Add new token info
+                    const tokenInfoDiv = document.createElement('div');
+                    tokenInfoDiv.id = 'token-info';
+                    tokenInfoDiv.innerHTML = tokenInfo;
+                    document.getElementById('auth_token').parentNode.parentNode.appendChild(tokenInfoDiv);
+
+                } else {
+                    throw new Error('Invalid response format');
+                }
+
+            } catch (error) {
+                console.error('Error fetching auth token:', error);
+
+                if (error.message.includes('CORS') || error.message.includes('cross-origin') || error.name === 'TypeError') {
+                    showAlert('เกิดปัญหา CORS - ใช้ Token เดิม', 'warning');
+                } else {
+                    showAlert(`เกิดข้อผิดพลาด: ${error.message}`, 'danger');
+                }
+            } finally {
+                // Re-enable button
+                getAuthTokenBtn.disabled = false;
+                getAuthTokenBtn.innerHTML = '<i class="bi bi-key me-1"></i>ดึง Token';
+            }
+        });
+
+        getOrderButton.addEventListener('click', async () => {
+            const orderId = document.getElementById('order_id').value;
+            const menuTemplateId = document.getElementById('menu_template_id_3').value;
+
+            if (!orderId) {
+                showAlert('กรุณากรอก Order ID', 'warning');
+                return;
+            }
+
+            // Disable button and show loading
+            getOrderButton.disabled = true;
+            getOrderButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>กำลังดึงข้อมูล...';
+            orderLoading.classList.remove('d-none');
+
+            try {
+                const apiUrl = `${urlApi}/order-by-id?menu_template_id=${menuTemplateId}&order_id=${orderId}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit',
+                    headers: {
+                        'accept': '*/*',
+                        'accept-language': 'th',
+                        'content-type': 'application/json',
+                        'language': 'th',
+                        'platform': 'website'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                renderOrderDetails(data);
+                showAlert('ดึงข้อมูล Order สำเร็จ!', 'success');
+
+            } catch (error) {
+                console.error('Error fetching order data:', error);
+
+                if (error.message.includes('CORS') || error.message.includes('cross-origin') || error.name === 'TypeError') {
+                    showAlert('เกิดปัญหา CORS - กำลังใช้ข้อมูลตัวอย่าง', 'warning');
+                    showCorsSolutionForOrder();
+                } else {
+                    showAlert(`เกิดข้อผิดพลาด: ${error.message}`, 'danger');
+                }
+
+                // Fallback to mock data
+                const mockOrderData = {
+                    "status": 1,
+                    "title": "OK",
+                    "detail": "success",
+                    "data": {
+                        "OrderID": "59870942",
+                        "StoreName": "PZ Riverside Plaza",
+                        "StoreNumber": "201111",
+                        "CreateTime": "2025-10-22T11:13:58",
+                        "DateOfTrans": "2025-10-22T11:14:14",
+                        "Total": 240,
+                        "Status": 0,
+                        "CustomerID": "4000005025059107",
+                        "Entries": {
+                            "CEntry": [
+                                {
+                                    "ItemID": 670130,
+                                    "ShortName": "Hot Americano-S",
+                                    "Price": 115,
+                                    "Entries": {
+                                        "CEntry": {
+                                            "ItemID": 643356,
+                                            "ShortName": "SIGNATURE_ROAST",
+                                            "Price": 0
+                                        }
+                                    }
+                                },
+                                {
+                                    "ItemID": 670131,
+                                    "ShortName": "Hot Latte-S",
+                                    "Price": 125,
+                                    "Entries": {
+                                        "CEntry": {
+                                            "ItemID": 643356,
+                                            "ShortName": "SIGNATURE_ROAST",
+                                            "Price": 0
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                };
+                renderOrderDetails(mockOrderData);
+            } finally {
+                getOrderButton.disabled = false;
+                getOrderButton.innerHTML = '<i class="bi bi-search me-2"></i>ดึงข้อมูล Order';
+                orderLoading.classList.add('d-none');
+            }
+        });
+
+        function renderOrderDetails(data) {
+            if (!data.data) {
+                orderDetails.innerHTML = '<div class="alert alert-warning">ไม่พบข้อมูล Order</div>';
+                return;
+            }
+
+            const order = data.data;
+            const entries = order.Entries?.CEntry || [];
+
+            let html = `
+        <!-- Order Header -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title h5 mb-0">
+                    <i class="bi bi-receipt me-2"></i>
+                    ใบเสร็จรับเงิน
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <h6 class="fw-bold">ข้อมูลร้าน</h6>
+                        <p class="mb-1"><strong>ชื่อร้าน:</strong> ${order.StoreName || 'N/A'}</p>
+                        <p class="mb-1"><strong>รหัสร้าน:</strong> ${order.StoreNumber || 'N/A'}</p>
+                        <p class="mb-1"><strong>รหัส Order:</strong> ${order.OrderID || 'N/A'}</p>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <h6 class="fw-bold">ข้อมูลการสั่งซื้อ</h6>
+                        <p class="mb-1"><strong>วันที่สั่ง:</strong> ${new Date(order.CreateTime).toLocaleString('th-TH')}</p>
+                        <p class="mb-1"><strong>เวลาส่ง:</strong> ${new Date(order.DateOfTrans).toLocaleString('th-TH')}</p>
+                        <p class="mb-1"><strong>สถานะ:</strong> <span class="badge bg-${getStatusColor(order.Status)}">${getStatusText(order.Status)}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Items -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title h6 mb-0">
+                    <i class="bi bi-list-ul me-2"></i>
+                    รายการสินค้า
+                </h4>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ลำดับ</th>
+                                <th>ชื่อสินค้า</th>
+                                <th>Mods</th>
+                                <th class="text-end">ราคา</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    `;
+
+            entries.forEach((entry, index) => {
+                const mods = entry.Entries?.CEntry ? [entry.Entries.CEntry] : [];
+                const modsText = mods.map(mod => mod.ShortName).join(', ') || 'ไม่มี';
+
+                html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>
+                    <div>
+                        <strong>${entry.ShortName || 'N/A'}</strong>
+                        <br>
+                        <small class="text-muted">ID: ${entry.ItemID}</small>
+                    </div>
+                </td>
+                <td>
+                    <small class="text-muted">${modsText}</small>
+                </td>
+                <td class="text-end">
+                    <strong>${entry.Price || 0} บาท</strong>
+                </td>
+            </tr>
+        `;
+            });
+
+            html += `
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold">รวมทั้งสิ้น</td>
+                                <td class="text-end fw-bold text-primary">${order.Total || 0} บาท</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="row mt-4">
+            <div class="col-12 col-md-6">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="fw-bold">ข้อมูลลูกค้า</h6>
+                        <p class="mb-1"><strong>รหัสลูกค้า:</strong> ${order.CustomerID || 'N/A'}</p>
+                        <p class="mb-1"><strong>รหัสที่อยู่:</strong> ${order.AddressID || 'N/A'}</p>
+                        <p class="mb-1"><strong>วันที่เกิด:</strong> ${order.DOB || 'N/A'}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="fw-bold">ข้อมูลการชำระเงิน</h6>
+                        <p class="mb-1"><strong>ยอดชำระ:</strong> ${order.Payments?.CC_ORDER_PAYMENT?.PAY_AMOUNT || 0} บาท</p>
+                        <p class="mb-1"><strong>วิธีการชำระ:</strong> ${order.Payments?.CC_ORDER_PAYMENT?.PAY_REF_GATEWAY || 'N/A'}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+            orderDetails.innerHTML = html;
+        }
+
+        function getStatusColor(status) {
+            switch (status) {
+                case 0: return 'success';
+                case 1: return 'warning';
+                case 2: return 'info';
+                default: return 'secondary';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 0: return 'สำเร็จ';
+                case 1: return 'รอดำเนินการ';
+                case 2: return 'กำลังดำเนินการ';
+                default: return 'ไม่ทราบสถานะ';
+            }
+        }
+
+        // เพิ่มฟังก์ชัน CORS solution สำหรับ order
+        function showCorsSolutionForOrder() {
+            const corsModal = document.getElementById('cors-order-modal') || createCorsOrderModal();
+            const modal = new bootstrap.Modal(corsModal);
+            modal.show();
+        }
+    </script>
+</body>
+
+</html>
