@@ -407,13 +407,13 @@
                                     <div class="col-12 col-sm-4">
                                         <label for="limit_c_mod_group" class="form-label fw-semibold">Limit C Mod
                                             Group</label>
-                                        <input type="number" id="limit_c_mod_group" class="form-control" value="1"
+                                        <input type="number" id="limit_c_mod_group" class="form-control" value="10"
                                             min="1">
                                     </div>
                                     <div class="col-12 col-sm-4">
                                         <label for="limit_c_object" class="form-label fw-semibold">Limit C
                                             Object</label>
-                                        <input type="number" id="limit_c_object" class="form-control" value="2" min="1">
+                                        <input type="number" id="limit_c_object" class="form-control" value="10" min="1">
                                     </div>
                                     <div class="col-12 col-sm-4">
                                         <label for="max_level" class="form-label fw-semibold">Max Level</label>
@@ -512,7 +512,7 @@
                                             </div>
                                             <div class="col-12 col-sm-6">
                                                 <label for="bu_code" class="form-label fw-semibold">BU Code</label>
-                                                <input type="number" id="bu_code" class="form-control" value="1245">
+                                                <input type="number" id="bu_code" class="form-control" value="47076">
                                             </div>
                                             <div class="col-12 col-sm-6">
                                                 <label for="menu_template_id_2" class="form-label fw-semibold">Menu
@@ -1681,7 +1681,7 @@
                                         price: childMod.price,
                                         quantity: 1
                                     })),
-                                    mods_count: childMods.length
+                                    quantity: 1
                                 };
                                 hierarchicalMods.push(mainModObj);
                             });
@@ -1700,7 +1700,7 @@
                                         price: childMod.price,
                                         quantity: 1
                                     })),
-                                    mods_count: groupedMods[key].length
+                                    quantity: 1
                                 };
                                 hierarchicalMods.push(orphanedModObj);
                             }
